@@ -8,6 +8,8 @@
 
 ;;; Commentary:
 ;;; Code:
+(require 'rx)
+
 (defconst cedar--keywords
   '("enum" "union" "record" "fn"))
 
@@ -63,11 +65,31 @@
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
 
-(define-derived-mode cedar-mode prog-mode "Cedar"
-  "Major mode for editing Cedar files."
+(defconst cedar-syntax-propertize
+  (syntax-propertize-rules
+   ((rx (and (0+ " ") (group "//")
+             (0+ any) (group "\n")))
+    (1 "< b")
+    (2 "> b"))))
 
+(defvar cedar-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?/ ". 23n" st)
+    (modify-syntax-entry ?_ "w" st)
+    st))
+
+(define-derived-mode cedar-mode prog-mode "Cedar"
+  "Major mode for editing Cedar files.
+
+Key bindings:
+\\{cedar-mode-map}"
+
+  (set-syntax-table cedar-mode-syntax-table)
+
+  (set (make-local-variable 'comment-start) "//")
   (set (make-local-variable 'font-lock-defaults) cedar-font-lock)
   (set (make-local-variable 'indent-line-function) #'cedar-indent-line)
+  (set (make-local-variable 'syntax-propertize-function) cedar-syntax-propertize)
 
   (define-key cedar-mode-map "\C-j" #'newline-and-indent))
 
